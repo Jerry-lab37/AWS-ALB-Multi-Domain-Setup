@@ -1,0 +1,107 @@
+### **Step-by-Step Guide**
+
+#### **1. Prepare Your Domains**
+
+- Ensure you have two domains (e.g., `example1.com` and `example2.com`).
+- Update the DNS records for each domain to point to the ALB's public DNS name (e.g., `your-alb.amazonaws.com`).
+
+---
+
+#### **2. Set Up an SSL Certificate for Each Domain**
+
+- Use **AWS Certificate Manager (ACM)** to create SSL certificates for both domains.
+
+**Steps to Request Certificates:**
+
+1. Navigate to the **ACM Console** in AWS.
+2. Click **Request a Certificate**.
+3. Choose **Request a public certificate**.
+4. Add your domains (`example1.com` and `example2.com`).
+5. Validate domain ownership:
+    - **DNS Validation (Recommended)**: Add the provided CNAME record to your domain's DNS configuration.
+    - **Email Validation**: Verify ownership by responding to an email sent to domain administrator addresses.
+
+- Once validated, the certificates will be available in ACM.
+
+---
+
+#### **3. Configure an Application Load Balancer**
+
+- Open the **EC2 Console** and navigate to **Load Balancers**.
+- Click **Create Load Balancer** and select **Application Load Balancer**.
+
+**Configure the ALB:**
+
+1. **Basic Configuration:**
+    
+    - Name: Give your ALB a name (e.g., `my-alb`).
+    - Scheme: Choose **Internet-facing**.
+    - Listeners: Add a listener for **HTTPS (port 443)**.
+    - Availability Zones: Select the VPC and subnets.
+2. **Security Groups:**
+    
+    - Create or select a security group that allows traffic on port 443.
+3. **SSL Certificate:**
+    
+    - During listener setup, choose **Add Certificates** and add both domain certificates from ACM.
+4. **Create ALB:**
+    
+    - Review and create the ALB.
+
+---
+
+#### **4. Set Up Listener Rules**
+
+- After creating the ALB, navigate to the **Listeners** tab.
+- Click on the **HTTPS listener** (port 443) and edit the rules.
+
+**Add Host-Based Routing Rules:**
+
+- Default Rule: Set a fallback target (optional).
+- Add Rules:
+    - If the `Host` header matches `example1.com`, forward to a target group (e.g., `TargetGroup1`).
+    - If the `Host` header matches `example2.com`, forward to the same or another target group.
+
+---
+
+#### **5. Create Target Group**
+
+- Create a target group for the EC2 instance:
+    1. Navigate to **Target Groups** in the EC2 Console.
+    2. Click **Create target group**.
+    3. Target Type: Choose **Instance**.
+    4. Protocol: HTTP or HTTPS (based on your EC2 setup).
+    5. Register the EC2 instance with the target group.
+
+---
+
+#### **6. Configure EC2 Instance**
+
+- Ensure the EC2 instance is running your application and listening on the appropriate ports (e.g., 80 or 443).
+- Update the instance's security group to allow traffic from the ALB.
+
+---
+
+#### **7. Update DNS Records**
+
+- Use your domain registrar or DNS hosting provider to point both domains (`example1.com` and `example2.com`) to the ALB.
+
+**Example DNS Record:**
+
+- Type: A or CNAME
+    
+- Name: `example1.com`
+    
+- Value: ALB DNS name (e.g., `your-alb.amazonaws.com`)
+    
+- Repeat for `example2.com`.
+    
+
+---
+
+#### **8. Test the Setup**
+
+- Access `https://example1.com` and `https://example2.com` in a browser.
+- Verify that:
+    - The correct certificate is presented for each domain.
+    - Traffic is routed to the EC2 instance
